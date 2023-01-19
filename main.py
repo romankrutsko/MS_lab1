@@ -2,10 +2,9 @@ import math
 import random
 from matplotlib import pyplot as plt
 import numpy as np
-import statistics as st
 import scipy.integrate as integrate
 
-hi_squared_table = {
+chi_squared_table = {
     1: 3.8,
     2: 6.0,
     3: 7.8,
@@ -38,174 +37,159 @@ hi_squared_table = {
     30: 43.8
 }
 
-
-def drawGraph(xArray: list, space=0):
-    plt.xlim([min(xArray) - space, max(xArray) + space])
+def draw_histogram(data, space=0):
+    plt.xlim([min(data) - space, max(data) + space])
 
     bins = np.arange(-100, 100, 0.5)
-    plt.hist(xArray, bins=bins, alpha=0.5)
+    plt.hist(data, bins=bins, alpha=0.5)
     plt.title('exponent function')
     plt.xlabel('x')
     plt.ylabel('y')
 
     plt.show()
-    return
 
-
-def drawFunction(xArray: list, yArray: list):
-    plt.scatter(xArray, yArray)
+def draw_scatter_plot(x, y):
+    plt.scatter(x, y)
     plt.xlabel('x')
     plt.ylabel('y')
 
     plt.show()
-    return
 
+def exponential_distribution(rate: float) -> list:
+    data = []
+    for _ in range(0, 10000):
+        random_value = random.random()
+        data.append(-np.log(random_value) / rate)
 
-def exponDistr(lamda: float) -> list:
-    xArray = []
-    for item in range(0, 10000):
-        randomValue = random.random()
-        xArray.append(-np.log(randomValue) / lamda)
+    return data
 
-    return (xArray)
+def exponential_distribution_rule(rate: float, data: list) -> list:
+    y = []
+    for x in data:
+        y.append(1 - math.pow(math.e, -rate * x))
+    return y
 
-
-def expDistRule(lamda: float, xArray: list) -> list:
-    yArray = []
-    for item in xArray:
-        yArray.append(1 - math.pow(math.e, -lamda * item))
-    return (yArray)
-
-
-def normalDistr(a: float, sigma: float) -> list:
-    xArray = []
-    for itemFirst in range(0, 10000):
+def normal_distribution(mean: float, std_dev: float) -> list:
+    data = []
+    for _ in range(0, 10000):
         mu = -6
-        for item in range(0, 12):
+        for _ in range(0, 12):
             mu += random.random()
-        xArray.append(sigma * mu + a)
-    return (xArray)
+        data.append(std_dev * mu + mean)
+    return data
 
+def normal_distribution_rule(mean: float, std_dev: float, data: list) -> list:
+    y = []
+    for x in data:
+        y.append(1 / (std_dev * math.sqrt(2 * math.pi)) * math.exp(-math.pow(x - mean, 2) / (2 * std_dev * std_dev)))
+    return y
 
-def normalDistrSecond(a: float, sigma: float, xArray: list) -> list:
-    yArray = []
-    for item in xArray:
-        yArray.append(1 / (sigma * math.sqrt(2 * math.pi)) * math.exp(-math.pow(item - a, 2) / (2 * sigma * sigma)))
-    return yArray
-
-
-def evenDistr(a=math.pow(5, 12), c=math.pow(2, 9)) -> list:
+def uniform_distribution(a=math.pow(5, 12), c=math.pow(2, 9)) -> list:
     z = a * random.random() % c
-    xArray = []
-    for item in range(0, 10000):
+    data = []
+    for _ in range(0, 10000):
         z = a * z % c
-        xArray.append(z / c)
+        data.append(z / c)
 
-    return xArray
+    return data
 
-
-def getInterv(array, count) -> list:
-    intervalSize = (max(array) - min(array)) / count
+def get_interval(data, count) -> list:
+    interval_size = (max(data) - min(data)) / count
     intervals = []
 
-    counter = min(array)
-    for item in range(0, count):
-        intervals.append([0, [counter, counter + intervalSize]])
-        counter = counter + intervalSize
-    return (intervals)
+    counter = min(data)
+    for _ in range(0, count):
+        intervals.append([0, [counter, counter + interval_size]])
+        counter = counter + interval_size
+    return intervals
 
-
-def getActualInterv(array, intervals) -> list:
-    for item in array:
+def get_actual_interval(data, intervals) -> list:
+    for x in data:
         for interval in intervals:
-            if item > interval[1][0] and item <= interval[1][1]:
-                interval[0] = interval[0] + 1
+            if x > interval[1][0] and x <= interval[1][1]:
+                interval[0] += 1
     return intervals
 
 
-def getExpExpValue(first, second, lamda):
+def get_exp_exp_value(first, second, lamda):
     return np.exp(-lamda * first) - np.exp(-lamda * second)
 
-
-def getExpNormValue(first, second, alpha, sygma):
+def get_exp_norm_value(first, second, mean, std_dev):
     def func(x):
-        return 1 / (sygma * np.sqrt(2 * np.pi)) * np.exp(- (x - alpha) ** 2 / (2 * sygma ** 2))
+        return 1 / (std_dev * np.sqrt(2 * np.pi)) * np.exp(- (x - mean) ** 2 / (2 * std_dev ** 2))
 
-    res, mes = integrate.quad(func, first, second)
-    return res
+    result, _ = integrate.quad(func, first, second)
+    return result
 
+def get_exp_uniform_value(first, second, data):
+    return (second - first) / (max(data) - min(data))
 
-def getExpEvenValue(first, second, array):
-    return (second - first) / (max(array) - min(array))
-
-
-def getChiValues(expectedList, observedList, intervals):
-    obsrvedChiSqr = 0
+def get_chi_values(expected_list, observed_list, intervals):
+    observed_chi_sqr = 0
     for i in range(len(intervals)):
-        expectedValue = 10000 * expectedList[i]
-        obsrvedChiSqr += pow(observedList[i][0] - expectedValue, 2) / expectedValue
-    return obsrvedChiSqr, hi_squared_table[len(intervals) - 1]
-
+        expected_value = 10000 * expected_list[i]
+        observed_chi_sqr += pow(observed_list[i][0] - expected_value, 2) / expected_value
+    return observed_chi_sqr, chi_squared_table[len(intervals) - 1]
 
 # first
-xArray = exponDistr(0.5)
-intervals = getInterv(xArray, 20)
-intervalsWithValues = getActualInterv(xArray, getInterv(xArray, 20))
+x_array = exponential_distribution(0.5)
+intervals = get_interval(x_array, 20)
+intervals_with_values = get_actual_interval(x_array, get_interval(x_array, 20))
 
-print("mean = " + str(st.mean(xArray)))
-print("pvariance = " + str(st.pvariance(xArray)))
-print(*intervalsWithValues, sep="\n")
+print("mean = " + str(np.mean(x_array)))
+print("pvariance = " + str(np.var(x_array)))
+print(*intervals_with_values, sep="\n")
 
-xExpArray = []
+x_exp_array = []
 for item in intervals:
-    xExpArray.append(getExpExpValue(item[1][0], item[1][1], 0.5))
+    x_exp_array.append(get_exp_exp_value(item[1][0], item[1][1], 0.5))
 
-ChiValue = getChiValues(xExpArray, intervalsWithValues, intervals)
-print("Observed X^2: " + str(ChiValue[0]))
-print("Expected X^2: " + str(ChiValue[1]))
+chi_value = get_chi_values(x_exp_array, intervals_with_values, intervals)
+print("Observed Chi-squared: " + str(chi_value[0]))
+print("Expected Chi-squared: " + str(chi_value[1]))
 
-drawGraph(xArray)
-drawFunction(xArray, expDistRule(0.5, xArray))
+draw_histogram(x_array)
+draw_scatter_plot(x_array, exponential_distribution_rule(0.5, x_array))
 
 # second
-alpha = 9
-sigma = 5
-xArrayNormal = normalDistr(alpha, sigma)
-intervals = getInterv(xArrayNormal, 20)
-intervalsWithValues = getActualInterv(xArrayNormal, intervals)
+mean = 9
+std_dev = 5
+x_array_normal = normal_distribution(mean, std_dev)
+intervals = get_interval(x_array_normal, 20)
+intervals_with_values = get_actual_interval(x_array_normal, intervals)
 
-print("mean = " + str(st.mean(xArrayNormal)))
-print("pvariance = " + str(st.pvariance(xArrayNormal)))
-print(*intervalsWithValues, sep="\n")
+print("mean = " + str(np.mean(x_array_normal)))
+print("pvariance = " + str(np.var(x_array_normal)))
+print(*intervals_with_values, sep="\n")
 
-xExpArrayNorm = []
+x_exp_array_norm = []
 for item in intervals:
-    xExpArrayNorm.append(getExpNormValue(item[1][0], item[1][1], alpha, sigma))
+    x_exp_array_norm.append(get_exp_norm_value(item[1][0], item[1][1], mean, std_dev))
 
-ChiValue = getChiValues(xExpArrayNorm, intervalsWithValues, intervals)
+chi_value = get_chi_values(x_exp_array_norm, intervals_with_values, intervals)
 
-print("Observed X^2: " + str(ChiValue[0]))
-print("Expected X^2: " + str(ChiValue[1]))
+print("Observed Chi-squared: " + str(chi_value[0]))
+print("Expected Chi-squared: " + str(chi_value[1]))
 
-drawGraph(xArrayNormal)
-drawFunction(xArrayNormal, normalDistrSecond(alpha, sigma, xArrayNormal))
+draw_histogram(x_array_normal)
+draw_scatter_plot(x_array_normal, normal_distribution_rule(mean, std_dev, x_array_normal))
 
 # third
-xArrayEven = evenDistr()
-intervals = getInterv(xArrayEven, 10)
-intervalsWithValues = getActualInterv(xArrayEven, intervals)
+x_array_uniform = uniform_distribution()
+intervals = get_interval(x_array_uniform, 10)
+intervals_with_values = get_actual_interval(x_array_uniform, intervals)
 
-print("mean = " + str(st.mean(xArrayEven)))
-print("pvariance = " + str(st.pvariance(xArrayEven)))
-print(*intervalsWithValues, sep="\n")
+print("mean = " + str(np.mean(x_array_uniform)))
+print("pvariance = " + str(np.var(x_array_uniform)))
+print(*intervals_with_values, sep="\n")
 
-xExpArrayRivn = []
+x_exp_array_uniform = []
 for item in intervals:
-    xExpArrayRivn.append(getExpEvenValue(item[1][0], item[1][1], xArrayEven))
+    x_exp_array_uniform.append(get_exp_uniform_value(item[1][0], item[1][1], x_array_uniform))
 
-ChiValue = getChiValues(xExpArrayRivn, intervalsWithValues, intervals)
+chi_value = get_chi_values(x_exp_array_uniform, intervals_with_values, intervals)
 
-print("Observed X^2: " + str(ChiValue[0]))
-print("Expected X^2: " + str(ChiValue[1]))
+print("Observed Chi-squared: " + str(chi_value[0]))
+print("Expected Chi-squared: " + str(chi_value[1]))
 
-drawGraph(xArrayEven, 0.1)
+draw_histogram(x_array_uniform, 0.1)
